@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upload-api
+  namespace: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: upload-api
+  template:
+    metadata:
+      labels:
+        app: upload-api
+    spec:
+      imagePullSecrets:
+        - name: registry-auth-secret  # Указываем секрет для доступа к приватному реестру
+      containers:
+        - name: upload-api
+          image: 10.0.2.84:32002/upload_api
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: b2b-prod-secret  # Секрет с данными для окружения
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: upload-api-service
+  namespace: registry  # Укажите нужный namespace
+spec:
+  type: NodePort
+  ports:
+    - port: 8000  # Порт, на который будет поступать трафик
+      targetPort: 8000  # Порт контейнера
+      nodePort: 32008  # Порт, на котором сервис будет доступен на узлах
+  selector:
+    app: upload-api
+
